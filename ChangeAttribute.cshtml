@@ -1,0 +1,208 @@
+﻿@model ADUserManagement.Models.ViewModels.UserAttributeChangeViewModel
+@{
+    ViewData["Title"] = "Attribute Değiştirme Talebi";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Kullanıcı Attribute Değiştirme Talebi
+                </h4>
+            </div>
+            <div class="card-body">
+                <form id="attributeChangeForm" method="post" action="/Request/ChangeAttribute">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Kullanıcı Seçin <span class="text-danger">*</span>
+                        </label>
+                        <select id="userSelect" class="form-control" style="width: 100%;" required>
+                            <option></option>
+                        </select>
+                        <input type="hidden" asp-for="Username" id="hiddenUsername" />
+                    </div>
+
+                    <div id="attributeSection" style="display: none;">
+                        <div class="mb-3">
+                            <label asp-for="AttributeName" class="form-label">
+                                Değiştirilecek Alan <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="AttributeName" asp-items="Model.AttributeOptions" 
+                                    class="form-select" required>
+                                <option value="">-- Alan Seçiniz --</option>
+                            </select>
+                            <span asp-validation-for="AttributeName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="OldValue" class="form-label">Mevcut Değer</label>
+                            <input asp-for="OldValue" class="form-control" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="NewValue" class="form-label">
+                                Yeni Değer <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="NewValue" class="form-control" required />
+                            <span asp-validation-for="NewValue" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ChangeReason" class="form-label">
+                                Değişiklik Sebebi
+                            </label>
+                            <textarea asp-for="ChangeReason" class="form-control" rows="3" 
+                                      placeholder="Değişiklik sebebini açıklayınız..."></textarea>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between">
+                        <a href="/Request/MyRequests" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> İptal
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle"></i> Talep Oluştur
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            var preselectedUser = '@ViewBag.PreselectedUser';
+            
+            // Select2 için özel template
+            function formatUser(user) {
+                if (!user.id) return user.text;
+                
+                var $user = $(
+                    '<div class="user-result">' +
+                        '<div><strong>' + user.text + '</strong></div>' +
+                        '<div class="text-muted small">' +
+                            (user.email ? '<i class="bi bi-envelope"></i> ' + user.email + ' ' : '') +
+                            (user.department ? '<i class="bi bi-building"></i> ' + user.department : '') +
+                        '</div>' +
+                    '</div>'
+                );
+                return $user;
+            }
+            
+            // Select2 initialize
+            $('#userSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Kullanıcı adı veya isim yazın...',
+                minimumInputLength: 2,
+                allowClear: true,
+                ajax: {
+                    url: '/UserSearch/Search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatUser,
+                templateSelection: function(user) {
+                    return user.text || user.id;
+                }
+            });
+            
+            // Eğer kullanıcı önceden seçilmişse
+            if (preselectedUser) {
+                // Kullanıcıyı ara ve seç
+                $.get('/UserSearch/Search?term=' + preselectedUser, function(data) {
+                    if (data.results && data.results.length > 0) {
+                        var user = data.results[0];
+                        var option = new Option(user.text, user.id, true, true);
+                        $('#userSelect').append(option).trigger('change');
+                    }
+                });
+            }
+            
+            // Kullanıcı seçildiğinde
+            $('#userSelect').on('select2:select', function (e) {
+                var username = e.params.data.id;
+                $('#hiddenUsername').val(username);
+                $('#attributeSection').show();
+                checkFormValidity();
+            });
+            
+            // Temizlendiğinde
+            $('#userSelect').on('select2:clear', function () {
+                $('#hiddenUsername').val('');
+                $('#attributeSection').hide();
+                $('#submitBtn').prop('disabled', true);
+                $('#OldValue').val('');
+            });
+            
+            // Attribute seçildiğinde mevcut değeri getir
+            $('#AttributeName').on('change', function() {
+                var username = $('#hiddenUsername').val();
+                var attributeName = $(this).val();
+                
+                if (username && attributeName) {
+                    $('#OldValue').val('Yükleniyor...');
+                    
+                    $.get('/Request/GetUserAttributeValue', 
+                        { username: username, attributeName: attributeName },
+                        function(response) {
+                            if (response.success) {
+                                $('#OldValue').val(response.value || 'Boş');
+                            } else {
+                                $('#OldValue').val('Hata: ' + response.message);
+                            }
+                            checkFormValidity();
+                        }
+                    );
+                } else {
+                    $('#OldValue').val('');
+                }
+            });
+            
+            // Form validasyonu kontrol et
+            function checkFormValidity() {
+                var isValid = $('#hiddenUsername').val() && 
+                            $('#AttributeName').val() && 
+                            $('#NewValue').val();
+                $('#submitBtn').prop('disabled', !isValid);
+            }
+            
+            // Input değişikliklerini izle
+            $('#NewValue').on('input', checkFormValidity);
+            
+            // Form submit
+            $('#attributeChangeForm').on('submit', function(e) {
+                if (!$('#hiddenUsername').val()) {
+                    e.preventDefault();
+                    alert('Lütfen bir kullanıcı seçin!');
+                    return false;
+                }
+                
+                $('#submitBtn').prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm me-2"></span>Gönderiliyor...');
+            });
+        });
+    </script>
+}

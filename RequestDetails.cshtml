@@ -1,0 +1,399 @@
+﻿@using ADUserManagement.Models.Enums
+@{
+    ViewData["Title"] = "Talep Detayları";
+    var requestType = ViewBag.RequestType;
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        @if (requestType == "creation")
+        {
+            var request = Model as ADUserManagement.Models.Domain.UserCreationRequest;
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus"></i> Kullanıcı Açma Talebi - @request.RequestNumber
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>İsim:</strong> @request.FirstName
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Soyisim:</strong> @request.LastName
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Kullanıcı Adı:</strong> @request.Username
+                        </div>
+                        <div class="col-md-6">
+                            <strong>E-posta:</strong> @request.Email
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Telefon:</strong> @request.Phone
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Lokasyon:</strong> @request.Location
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Birim:</strong> @request.Department
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Unvan:</strong> @request.Title
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Şirket:</strong> @(request.Company?.CompanyName ?? "Bilinmiyor")
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Talep Eden:</strong> @(request.RequestedBy?.DisplayName ?? request.RequestedById.ToString())
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Açıklama:</strong><br />
+                            @(string.IsNullOrEmpty(request.Description) ? "-" : request.Description)
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>OU Path:</strong><br />
+                            <code>@(request.Company?.OUPath ?? "Bilinmiyor")</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (requestType == "deletion")
+        {
+            var request = Model as ADUserManagement.Models.Domain.UserDeletionRequest;
+            
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-dash"></i> Kullanıcı Kapatma Talebi - @request.RequestNumber
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Kullanıcı Adı:</strong> @request.Username
+                        </div>
+                        <div class="col-md-6">
+                            <strong>E-posta:</strong> @request.Email
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Talep Eden:</strong> @(request.RequestedBy?.DisplayName ?? request.RequestedById.ToString())
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Talep Tarihi:</strong> @request.RequestedDate.ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (requestType == "attribute")
+        {
+            var request = Model as ADUserManagement.Models.Domain.UserAttributeChangeRequest;
+            var friendlyAttributeName = ADAttributes.UserAttributes.ContainsKey(request.AttributeName) 
+                ? ADAttributes.UserAttributes[request.AttributeName] 
+                : request.AttributeName;
+            
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil-square"></i> Attribute Değiştirme Talebi - @request.RequestNumber
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Kullanıcı Adı:</strong> @request.Username
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Talep Eden:</strong> @(request.RequestedBy?.DisplayName ?? request.RequestedById.ToString())
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Değiştirilecek Alan:</strong> @friendlyAttributeName
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Talep Tarihi:</strong> @request.RequestedDate.ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Mevcut Değer:</strong> @(string.IsNullOrEmpty(request.OldValue) ? "Boş" : request.OldValue)
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Yeni Değer:</strong> <span class="badge bg-warning text-dark">@request.NewValue</span>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(request.ChangeReason))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <strong>Değişiklik Sebebi:</strong><br />
+                                @request.ChangeReason
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else if (requestType == "password")
+        {
+            var request = Model as ADUserManagement.Models.Domain.PasswordResetRequest;
+            
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-key"></i> Şifre Sıfırlama Talebi - @request.RequestNumber
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Kullanıcı Adı:</strong> @request.Username
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Kullanıcı E-posta:</strong> @request.UserEmail
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Talep Eden:</strong> @(request.RequestedBy?.DisplayName ?? request.RequestedById.ToString())
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Talep Tarihi:</strong> @request.RequestedDate.ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(request.Reason))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <strong>Sebep/Açıklama:</strong><br />
+                                @request.Reason
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Bilgi:</strong> Bu talep onaylandığında, kullanıcının şifresi sıfırlanacak ve yeni şifre 
+                        <strong>@request.UserEmail</strong> adresine gönderilecektir. Kullanıcı ilk girişte şifresini değiştirmeye zorlanacaktır.
+                    </div>
+                </div>
+            </div>
+        }
+        else if (requestType == "group")
+        {
+            var request = Model as ADUserManagement.Models.Domain.GroupMembershipRequest;
+            
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-people"></i> Grup Üyelik Talebi - @request.RequestNumber
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Kullanıcı Adı:</strong> @request.Username
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Grup Adı:</strong> <code>@request.GroupName</code>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>İşlem Tipi:</strong> 
+                            @if (request.ActionType == "Add")
+                            {
+                                <span class="badge bg-success">
+                                    <i class="bi bi-plus-circle"></i> Gruba Ekle
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-dash-circle"></i> Gruptan Çıkar
+                                </span>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Talep Tarihi:</strong> @request.RequestedDate.ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Talep Eden:</strong> @(request.RequestedBy?.DisplayName ?? request.RequestedById.ToString())
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(request.Reason))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <strong>Sebep/Açıklama:</strong><br />
+                                @request.Reason
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Bilgi:</strong> Bu talep onaylandığında, <strong>@request.Username</strong> kullanıcısı 
+                        <strong>@request.GroupName</strong> grubuna 
+                        @if (request.ActionType == "Add")
+                        {
+                            <span>eklenecektir.</span>
+                        }
+                        else
+                        {
+                            <span>gruptan çıkarılacaktır.</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-check2-square"></i> Onay / Red İşlemi
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <form method="post" action="/Admin/ApproveRequest" class="d-inline w-100">
+                            @Html.AntiForgeryToken()
+                            @{
+                                int approveRequestId = 0;
+                                if (requestType == "creation")
+                                {
+                                    approveRequestId = ((ADUserManagement.Models.Domain.UserCreationRequest)Model).Id;
+                                }
+                                else if (requestType == "deletion")
+                                {
+                                    approveRequestId = ((ADUserManagement.Models.Domain.UserDeletionRequest)Model).Id;
+                                }
+                                else if (requestType == "attribute")
+                                {
+                                    approveRequestId = ((ADUserManagement.Models.Domain.UserAttributeChangeRequest)Model).Id;
+                                }
+                                else if (requestType == "password")
+                                {
+                                    approveRequestId = ((ADUserManagement.Models.Domain.PasswordResetRequest)Model).Id;
+                                }
+                                else if (requestType == "group")
+                                {
+                                    approveRequestId = ((ADUserManagement.Models.Domain.GroupMembershipRequest)Model).Id;
+                                }
+                            }
+                            <input type="hidden" name="requestId" value="@approveRequestId" />
+                            <input type="hidden" name="requestType" value="@requestType" />
+                            <button type="submit" class="btn btn-success w-100" 
+                                    onclick="return confirm('Bu talebi onaylamak istediğinizden emin misiniz?');">
+                                <i class="bi bi-check-circle"></i> Talebi Onayla
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="bi bi-x-circle"></i> Talebi Reddet
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <a href="/Admin/PendingRequests" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Geri Dön
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Red Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/Admin/RejectRequest">
+                @Html.AntiForgeryToken()
+                @{
+                    int requestIdValue = 0;
+                    if (requestType == "creation")
+                    {
+                        requestIdValue = ((ADUserManagement.Models.Domain.UserCreationRequest)Model).Id;
+                    }
+                    else if (requestType == "deletion")
+                    {
+                        requestIdValue = ((ADUserManagement.Models.Domain.UserDeletionRequest)Model).Id;
+                    }
+                    else if (requestType == "attribute")
+                    {
+                        requestIdValue = ((ADUserManagement.Models.Domain.UserAttributeChangeRequest)Model).Id;
+                    }
+                    else if (requestType == "password")
+                    {
+                        requestIdValue = ((ADUserManagement.Models.Domain.PasswordResetRequest)Model).Id;
+                    }
+                    else if (requestType == "group")
+                    {
+                        requestIdValue = ((ADUserManagement.Models.Domain.GroupMembershipRequest)Model).Id;
+                    }
+                }
+                <input type="hidden" name="requestId" value="@requestIdValue" />
+                <input type="hidden" name="requestType" value="@requestType" />
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-x-circle"></i> Talebi Reddet
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Red Gerekçesi <span class="text-danger">*</span></label>
+                        <textarea name="rejectionReason" class="form-control" rows="3" required 
+                                  placeholder="Lütfen red gerekçesini açıklayın..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Reddet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

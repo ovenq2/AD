@@ -1,0 +1,95 @@
+﻿@model List<ADUserManagement.Models.ViewModels.RequestListViewModel>
+@{
+    ViewData["Title"] = "Bekleyen Talepler";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="bi bi-clock-history"></i> Bekleyen Talepler
+        </h2>
+
+        <div class="card">
+            <div class="card-body">
+                @if (Model == null || !Model.Any())
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">Bekleyen talep bulunmamaktadır.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Talep No</th>
+                                    <th>Talep Tipi</th>
+                                    <th>Kullanıcı</th>
+                                    <th>E-posta</th>
+                                    <th>Şirket</th>
+                                    <th>Talep Eden</th>
+                                    <th>Talep Tarihi</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var request in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <code>@request.RequestNumber</code>
+                                        </td>
+                                        <td>
+                                            @if (request.RequestType == "creation")
+                                            {
+                                                <span class="badge bg-primary">
+                                                    <i class="bi bi-person-plus"></i> Açma
+                                                </span>
+                                            }
+                                            else if (request.RequestType == "deletion")
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="bi bi-person-dash"></i> Kapatma
+                                                </span>
+                                            }
+                                            else if (request.RequestType == "attribute")
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-pencil-square"></i> Attribute
+                                                    </span>
+                                                    }
+                                                    else if (request.RequestType == "password")
+                                                    {
+                                                        <span class="badge bg-warning">
+                                                            <i class="bi bi-key"></i> Şifre
+                                                            </span>
+                                                            }
+                                        </td>
+                                        <td>
+                                            <strong>@request.DisplayName</strong><br />
+                                            <small class="text-muted">@request.Username</small>
+                                        </td>
+                                        <td>@request.Email</td>
+                                        <td>@(request.Company ?? "-")</td>
+                                        <td>@request.RequestedBy</td>
+                                        <td>
+                                            @request.RequestedDate.ToString("dd.MM.yyyy HH:mm")
+                                        </td>
+                                        <td>
+                                            <a href="/Admin/RequestDetails/@request.Id?type=@request.RequestType" 
+                                               class="btn btn-sm btn-warning">
+                                                <i class="bi bi-pencil-square"></i> İncele
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

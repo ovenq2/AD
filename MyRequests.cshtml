@@ -1,0 +1,195 @@
+﻿@model List<ADUserManagement.Models.ViewModels.RequestListViewModel>
+@{
+    ViewData["Title"] = "Grup Taleplerim";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-people"></i> Grup Üyelik Taleplerim
+            </h2>
+            <div>
+                <a asp-controller="Group" asp-action="MembershipRequest" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Yeni Grup Talebi
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                @if (Model == null || !Model.Any())
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">Henüz hiç grup üyelik talebiniz bulunmamaktadır.</p>
+                        <a asp-controller="Group" asp-action="MembershipRequest" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> İlk Talebi Oluştur
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Talep No</th>
+                                    <th>Kullanıcı</th>
+                                    <th>Grup</th>
+                                    <th>İşlem Tipi</th>
+                                    <th>Talep Tarihi</th>
+                                    <th>Durum</th>
+                                    <th>İşlem Tarihi</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var request in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <code>@request.RequestNumber</code>
+                                        </td>
+                                        <td>
+                                            <strong>@request.Username</strong>
+                                        </td>
+                                        <td>
+                                            @{
+                                                var parts = request.DisplayName.Split(" - ");
+                                                var groupName = parts.Length > 1 ? parts[1] : request.DisplayName;
+                                            }
+                                            <code>@groupName</code>
+                                        </td>
+                                        <td>
+                                            @if (request.Company == "Gruba Ekle")
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-plus-circle"></i> Ekle
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="bi bi-dash-circle"></i> Çıkar
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @request.RequestedDate.ToString("dd.MM.yyyy HH:mm")
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                @(request.Status == "Beklemede" ? "bg-warning text-dark" : 
+                                                  request.Status == "Onaylandı" ? "bg-success" : 
+                                                  request.Status == "Reddedildi" ? "bg-danger" : "bg-secondary")">
+                                                @request.Status
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @(request.ApprovedDate?.ToString("dd.MM.yyyy HH:mm") ?? "-")
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#detailModal"
+                                                    data-request-id="@request.Id"
+                                                    data-request-number="@request.RequestNumber"
+                                                    data-username="@request.Username"
+                                                    data-group-name="@groupName"
+                                                    data-action-type="@request.Company"
+                                                    data-status="@request.Status"
+                                                    data-requested-date="@request.RequestedDate.ToString("dd.MM.yyyy HH:mm")"
+                                                    data-approved-date="@(request.ApprovedDate?.ToString("dd.MM.yyyy HH:mm") ?? "-")">
+                                                <i class="bi bi-eye"></i> Detay
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detay Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-people"></i> Grup Üyelik Talebi Detayları
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th width="30%">Talep Numarası:</th>
+                        <td><code id="modalRequestNumber"></code></td>
+                    </tr>
+                    <tr>
+                        <th>Kullanıcı:</th>
+                        <td id="modalUsername"></td>
+                    </tr>
+                    <tr>
+                        <th>Grup:</th>
+                        <td><code id="modalGroupName"></code></td>
+                    </tr>
+                    <tr>
+                        <th>İşlem Tipi:</th>
+                        <td id="modalActionType"></td>
+                    </tr>
+                    <tr>
+                        <th>Talep Tarihi:</th>
+                        <td id="modalRequestedDate"></td>
+                    </tr>
+                    <tr>
+                        <th>Durum:</th>
+                        <td id="modalStatus"></td>
+                    </tr>
+                    <tr>
+                        <th>İşlem Tarihi:</th>
+                        <td id="modalApprovedDate"></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Modal'ı açarken verileri doldur
+        $('#detailModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            
+            $('#modalRequestNumber').text(button.data('request-number'));
+            $('#modalUsername').text(button.data('username'));
+            $('#modalGroupName').text(button.data('group-name'));
+            $('#modalRequestedDate').text(button.data('requested-date'));
+            $('#modalApprovedDate').text(button.data('approved-date'));
+            
+            var actionType = button.data('action-type');
+            if (actionType === 'Gruba Ekle') {
+                $('#modalActionType').html('<span class="badge bg-success"><i class="bi bi-plus-circle"></i> Gruba Ekle</span>');
+            } else {
+                $('#modalActionType').html('<span class="badge bg-warning text-dark"><i class="bi bi-dash-circle"></i> Gruptan Çıkar</span>');
+            }
+            
+            var status = button.data('status');
+            var statusClass = 'bg-secondary';
+            if (status === 'Beklemede') statusClass = 'bg-warning text-dark';
+            else if (status === 'Onaylandı') statusClass = 'bg-success';
+            else if (status === 'Reddedildi') statusClass = 'bg-danger';
+            
+            $('#modalStatus').html('<span class="badge ' + statusClass + '">' + status + '</span>');
+        });
+    </script>
+}

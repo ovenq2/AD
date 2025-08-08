@@ -1,0 +1,242 @@
+﻿@model ADUserManagement.Models.ViewModels.GroupMembershipViewModel
+@{
+    ViewData["Title"] = "Grup Üyelik Talebi";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-people"></i> Grup Üyelik Talebi
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Bilgi:</strong> Bu form ile kullanıcıları Active Directory gruplarına ekleyebilir veya çıkarabilirsiniz.
+                </div>
+
+                <form id="groupMembershipForm" method="post" action="/Group/MembershipRequest">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Kullanıcı Seçin <span class="text-danger">*</span>
+                        </label>
+                        <select id="userSelect" class="form-control" style="width: 100%;" required>
+                            <option></option>
+                        </select>
+                        <input type="hidden" asp-for="Username" id="hiddenUsername" />
+                        <span asp-validation-for="Username" class="text-danger"></span>
+                    </div>
+
+                    <div id="userGroupsSection" style="display: none;" class="mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Kullanıcının Mevcut Grupları:</h6>
+                                <div id="userGroupsList" class="small"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Grup Seçin <span class="text-danger">*</span>
+                        </label>
+                        <select id="groupSelect" class="form-control" style="width: 100%;" required>
+                            <option></option>
+                        </select>
+                        <input type="hidden" asp-for="GroupName" id="hiddenGroupName" />
+                        <span asp-validation-for="GroupName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ActionType" class="form-label">
+                            İşlem Tipi <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="ActionType" asp-items="Model.ActionTypes" class="form-select" required>
+                            <option value="">-- İşlem Seçiniz --</option>
+                        </select>
+                        <span asp-validation-for="ActionType" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Reason" class="form-label">
+                            Sebep/Açıklama
+                        </label>
+                        <textarea asp-for="Reason" class="form-control" rows="3" 
+                                  placeholder="Grup üyelik işleminin sebebini belirtiniz..."></textarea>
+                        <span asp-validation-for="Reason" class="text-danger"></span>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between">
+                        <a href="/Group/MyRequests" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> İptal
+                        </a>
+                        <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle"></i> Talep Oluştur
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Select2 için özel template
+            function formatUser(user) {
+                if (!user.id) return user.text;
+                
+                var $user = $(
+                    '<div class="user-result">' +
+                        '<div><strong>' + user.text + '</strong></div>' +
+                        '<div class="text-muted small">' +
+                            (user.email ? '<i class="bi bi-envelope"></i> ' + user.email + ' ' : '') +
+                            (user.department ? '<i class="bi bi-building"></i> ' + user.department : '') +
+                        '</div>' +
+                    '</div>'
+                );
+                return $user;
+            }
+            
+            // Kullanıcı Select2 initialize
+            $('#userSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Kullanıcı adı veya isim yazın...',
+                minimumInputLength: 2,
+                allowClear: true,
+                ajax: {
+                    url: '/UserSearch/Search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatUser,
+                templateSelection: function(user) {
+                    return user.text || user.id;
+                }
+            });
+
+            // Grup Select2 initialize
+            $('#groupSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Grup adı yazın...',
+                minimumInputLength: 2,
+                allowClear: true,
+                ajax: {
+                    url: '/Group/SearchGroups',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                }
+            });
+            
+            // Kullanıcı seçildiğinde
+            $('#userSelect').on('select2:select', function (e) {
+                var username = e.params.data.id;
+                $('#hiddenUsername').val(username);
+                
+                // Kullanıcının grup bilgilerini getir
+                $.get('/Group/GetUserGroups?username=' + username, function(response) {
+                    if (response.success && response.groups.length > 0) {
+                        var groupsHtml = '<div class="row">';
+                        response.groups.forEach(function(group, index) {
+                            if (index > 0 && index % 3 === 0) {
+                                groupsHtml += '</div><div class="row">';
+                            }
+                            groupsHtml += '<div class="col-md-4"><span class="badge bg-secondary me-1 mb-1">' + group + '</span></div>';
+                        });
+                        groupsHtml += '</div>';
+                        
+                        $('#userGroupsList').html(groupsHtml);
+                        $('#userGroupsSection').show();
+                    } else {
+                        $('#userGroupsList').html('<em class="text-muted">Bu kullanıcıya ait grup bilgisi bulunamadı.</em>');
+                        $('#userGroupsSection').show();
+                    }
+                });
+                
+                checkFormValidity();
+            });
+
+            // Grup seçildiğinde
+            $('#groupSelect').on('select2:select', function (e) {
+                var groupName = e.params.data.id;
+                $('#hiddenGroupName').val(groupName);
+                checkFormValidity();
+            });
+            
+            // Temizlendiğinde
+            $('#userSelect').on('select2:clear', function () {
+                $('#hiddenUsername').val('');
+                $('#userGroupsSection').hide();
+                checkFormValidity();
+            });
+
+            $('#groupSelect').on('select2:clear', function () {
+                $('#hiddenGroupName').val('');
+                checkFormValidity();
+            });
+            
+            // Form validasyonu kontrol et
+            function checkFormValidity() {
+                var isValid = $('#hiddenUsername').val() && 
+                            $('#hiddenGroupName').val() && 
+                            $('#ActionType').val();
+                $('#submitBtn').prop('disabled', !isValid);
+            }
+            
+            // Action type değişikliklerini izle
+            $('#ActionType').on('change', checkFormValidity);
+            
+            // Form submit
+            $('#groupMembershipForm').on('submit', function(e) {
+                if (!$('#hiddenUsername').val()) {
+                    e.preventDefault();
+                    alert('Lütfen bir kullanıcı seçin!');
+                    return false;
+                }
+                
+                if (!$('#hiddenGroupName').val()) {
+                    e.preventDefault();
+                    alert('Lütfen bir grup seçin!');
+                    return false;
+                }
+                
+                $('#submitBtn').prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm me-2"></span>Gönderiliyor...');
+            });
+        });
+    </script>
+}

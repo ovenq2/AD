@@ -1,0 +1,241 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AD Kullanıcı Yönetim</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ADUserManagement.styles.css" asp-append-version="true" />
+    <style>
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        
+        .stat-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,.1);
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,.15);
+        }
+        
+        .stat-card.warning { background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); }
+        .stat-card.success { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
+        .stat-card.danger { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .stat-card.info { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        
+        .stat-card h6 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+        
+        .stat-card h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,.08);
+            transition: box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,.12);
+        }
+        
+        .card-header {
+            border-bottom: none;
+            font-weight: 600;
+        }
+        
+        .btn {
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,.15);
+        }
+        
+        .table {
+            font-size: 0.95rem;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #495057;
+            background-color: #f8f9fa;
+        }
+        
+        .badge {
+            padding: 0.375rem 0.75rem;
+            font-weight: 500;
+        }
+        
+        .user-result {
+            padding: 5px 0;
+        }
+        
+        /* Dropdown menu styling */
+        .dropdown-menu {
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+            border: none;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-shield-lock-fill text-primary"></i> AD Yönetim
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+
+                            
+@if (User.IsInRole("HelpDesk") || User.IsInRole("SysNet"))
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+            <i class="bi bi-house-door"></i> Ana Sayfa
+        </a>
+    </li>
+    
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-people"></i> Kullanıcı İşlemleri
+        </a>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" asp-controller="Request" asp-action="CreateUser">
+                <i class="bi bi-person-plus"></i> Kullanıcı Açma Talebi
+            </a></li>
+            <li><a class="dropdown-item" asp-controller="Request" asp-action="DeleteUser">
+                <i class="bi bi-person-dash"></i> Kullanıcı Kapatma Talebi
+            </a></li>
+            <li><a class="dropdown-item" asp-controller="Request" asp-action="ChangeAttribute">
+                <i class="bi bi-pencil-square"></i> Attribute Değiştirme
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" asp-controller="UserSearch" asp-action="Index">
+                <i class="bi bi-search"></i> Kullanıcı Arama
+            </a></li>
+        </ul>
+    </li>
+
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle text-dark" href="#" id="groupDropdown" role="button" data-bs-toggle="dropdown">
+        <i class="bi bi-diagram-3"></i> Grup İşlemleri
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" asp-controller="Group" asp-action="MembershipRequest">
+            <i class="bi bi-person-plus-fill"></i> Grup Üyelik Talebi
+        </a></li>
+        <li><a class="dropdown-item" asp-controller="Group" asp-action="MyRequests">
+            <i class="bi bi-list-ul"></i> Grup Talepleri
+        </a></li>
+    </ul>
+</li>
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-dark" href="#" id="passwordDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-key"></i> Şifre İşlemleri
+        </a>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" asp-controller="Password" asp-action="ResetRequest">
+                <i class="bi bi-plus-circle"></i> Şifre Sıfırlama Talebi
+            </a></li>
+            <li><a class="dropdown-item" asp-controller="Password" asp-action="MyRequests">
+                <i class="bi bi-list-ul"></i> Şifre Talepleri
+            </a></li>
+        </ul>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-controller="Request" asp-action="MyRequests">
+            <i class="bi bi-list-task"></i> Taleplerim
+        </a>
+    </li>
+}
+                            
+                            @if (User.IsInRole("SysNet"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="PendingRequests">
+                                        <i class="bi bi-shield-check"></i> Yönetim
+                                    </a>
+                                </li>
+                            }
+                        }
+                    </ul>
+                    
+                    <partial name="_LoginPartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container-fluid">
+        <main role="main" class="pb-3 mt-3">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2024 - AD Kullanıcı Yönetim Sistemi - <a asp-area="" asp-controller="Home" asp-action="Privacy">Gizlilik</a>
+        </div>
+    </footer>
+    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
